@@ -8,6 +8,20 @@
       "when": 1766678595949,
       "tag": "0000_fat_scourge",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766683537467,
+      "tag": "0001_unusual_ben_grimm",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766683560413,
+      "tag": "0002_mushy_texas_twister",
+      "breakpoints": true
     }
   ]
 }
