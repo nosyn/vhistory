@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MapPlaceholder } from '@/components/map-placeholder';
+import dynamic from 'next/dynamic';
 import { api } from '@/lib/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,27 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Search } from 'lucide-react';
+import Link from 'next/link';
+import MapDemo from '@/components/maps/map-demo';
+
+// Dynamic import for Nivo map component (client-side only)
+const VietnamRegionalMap = dynamic(
+  () => import('@/components/maps/vietnam-regional-map'),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className='flex items-center justify-center bg-sand-50 rounded-lg border border-sand-200'
+        style={{ height: 400, width: '100%' }}
+      >
+        <div className='text-center'>
+          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-terracotta-500 mx-auto mb-4' />
+          <p className='text-sand-600'>Loading map...</p>
+        </div>
+      </div>
+    ),
+  }
+);
 
 export default function Home() {
   const [query, setQuery] = useState('');
@@ -95,36 +116,35 @@ export default function Home() {
           {results.length > 0 ? (
             <div className='mt-8 max-w-xl mx-auto space-y-2'>
               {results.map((word: any) => (
-                <Card
-                  key={word.id}
-                  className='text-left hover:shadow-md transition-shadow border-sand-200'
-                >
-                  <CardHeader className='pb-3'>
-                    <div className='flex justify-between items-start'>
-                      <CardTitle className='text-xl font-serif text-terracotta-700'>
-                        {word.content}
-                      </CardTitle>
-                      <Badge
-                        variant='secondary'
-                        className='bg-sand-100 text-terracotta-700 hover:bg-sand-200'
-                      >
-                        {word.dialectType}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className='space-y-2'>
-                    <CardDescription className='text-sand-600'>
-                      {word.definition}
-                    </CardDescription>
-                    {word.usageExample && (
-                      <Alert className='bg-sand-50 border-sand-200'>
-                        <AlertDescription className='text-sand-600 italic text-sm'>
-                          "{word.usageExample}"
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </CardContent>
-                </Card>
+                <Link key={word.id} href={`/word/${word.id}`}>
+                  <Card className='text-left hover:shadow-md transition-shadow border-sand-200 cursor-pointer'>
+                    <CardHeader className='pb-3'>
+                      <div className='flex justify-between items-start'>
+                        <CardTitle className='text-xl font-serif text-terracotta-700'>
+                          {word.content}
+                        </CardTitle>
+                        <Badge
+                          variant='secondary'
+                          className='bg-sand-100 text-terracotta-700 hover:bg-sand-200'
+                        >
+                          {word.dialectType}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className='space-y-2'>
+                      <CardDescription className='text-sand-600'>
+                        {word.definition}
+                      </CardDescription>
+                      {word.usageExample && (
+                        <Alert className='bg-sand-50 border-sand-200'>
+                          <AlertDescription className='text-sand-600 italic text-sm'>
+                            "{word.usageExample}"
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           ) : hasSearched && !loading ? (
@@ -190,7 +210,7 @@ export default function Home() {
         </div>
 
         {/* Map Section */}
-        <div className='space-y-6'>
+        <div className='space-y-6 min-w-0'>
           <div className='flex items-center gap-3 mb-4'>
             <Separator className='flex-1 bg-sand-200' />
             <h2 className='font-serif text-2xl font-bold text-sand-600'>
@@ -198,7 +218,15 @@ export default function Home() {
             </h2>
             <Separator className='flex-1 bg-sand-200' />
           </div>
-          <MapPlaceholder />
+          <div className='w-full'>
+            <VietnamRegionalMap
+              height={400}
+              data={[]}
+              domain={[0, 100]}
+              colors='BuPu'
+              showLegend={false}
+            />
+          </div>
           <div className='grid grid-cols-3 gap-4'>
             <Card className='text-center border-sand-200 hover:shadow-md transition-shadow'>
               <CardContent className='pt-6'>
