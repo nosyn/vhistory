@@ -29,11 +29,13 @@ interface VietnamRegionalMapProps {
   onProvinceClick?: (province: Province) => void;
   /**
    * Optional array of province data with values for choropleth coloring
-   * Format: [{ id: 'VN-01', value: 100 }, ...]
+   * Format: [{ id: 'VN-01', value: 50 }, ...]
+   * Value represents usage strength (0-100)
    */
   data?: Array<{ id: string; value: number }>;
   /**
    * Domain for color scale [min, max]
+   * Default: [0, 100] for usage strength
    */
   domain?: [number, number];
   /**
@@ -54,7 +56,7 @@ interface VietnamRegionalMapProps {
 export default function VietnamRegionalMap({
   onProvinceClick,
   data = [],
-  domain = [0, 1000],
+  domain = [0, 100],
   colors = 'BuPu',
   showLegend = true,
   height = 600,
@@ -112,6 +114,19 @@ export default function VietnamRegionalMap({
 
   if (!geoData) return null;
 
+  // Custom terracotta color scheme for better theme integration
+  const terracottaColors =
+    colors === 'oranges'
+      ? [
+          '#fbb3a8', // lightest highlight
+          '#f08f7b', // light
+          '#e06b4f', // medium
+          '#c14d36', // terracotta-600 (main brand color)
+          '#a03d2a', // darker
+          '#853528', // terracotta-800
+          '#6e2a21', // darkest
+        ]
+      : colors;
   return (
     <div
       style={{ height, width: '100%' }}
@@ -121,9 +136,9 @@ export default function VietnamRegionalMap({
         data={data}
         features={geoData.features}
         margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
-        colors={colors}
+        colors={terracottaColors}
         domain={domain}
-        unknownColor='#e5e7eb'
+        unknownColor='#faf8f6'
         label='properties.name'
         valueFormat='.2s'
         projectionType='mercator'
@@ -131,9 +146,9 @@ export default function VietnamRegionalMap({
         projectionTranslation={[0.5, 0.5]}
         projectionRotation={[-106, -16, 0]}
         enableGraticule={false}
-        graticuleLineColor='#dddddd'
-        borderWidth={0.5}
-        borderColor='#ffffff'
+        graticuleLineColor='#ded7d0'
+        borderWidth={1.5}
+        borderColor='#e5dfd8'
         onClick={(feature) => {
           if (onProvinceClick && feature.data) {
             onProvinceClick(feature.data as Province);
@@ -152,8 +167,8 @@ export default function VietnamRegionalMap({
                   itemWidth: 94,
                   itemHeight: 18,
                   itemDirection: 'left-to-right',
-                  itemTextColor: '#6e3027',
-                  itemOpacity: 0.85,
+                  itemTextColor: '#853528',
+                  itemOpacity: 0.95,
                   symbolSize: 18,
                 },
               ]
@@ -175,19 +190,33 @@ export default function VietnamRegionalMap({
               padding: '12px 16px',
             },
           },
+          legends: {
+            text: {
+              fill: '#853528',
+              fontFamily: 'var(--font-serif)',
+              fontSize: 12,
+            },
+          },
         }}
         tooltip={({ feature }) => {
-          const featureId = (feature as any).id;
+          const featureId = (feature as any).properties?.id; // Use properties.id (e.g., "VN22")
           const featureName = (feature as any).properties?.name;
           const dataPoint = data.find((d) => d.id === featureId);
           return (
-            <div className='bg-white px-4 py-3 rounded-lg shadow-lg border border-sand-200'>
+            <div className='bg-white px-4 py-3 rounded-lg shadow-lg border border-sand-200 w-48'>
               <div className='font-serif font-bold text-terracotta-800 mb-1'>
                 {featureName}
               </div>
-              {dataPoint && (
+              {dataPoint ? (
                 <div className='text-sm text-sand-600'>
-                  Words: <span className='font-medium'>{dataPoint.value}</span>
+                  Usage Strength:{' '}
+                  <span className='font-medium text-terracotta-600'>
+                    {dataPoint.value}%
+                  </span>
+                </div>
+              ) : (
+                <div className='text-xs text-sand-400 italic'>
+                  No words recorded yet
                 </div>
               )}
             </div>

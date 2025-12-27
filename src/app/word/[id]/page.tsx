@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { words, regions } from '@/lib/db/schema';
+import { words, regions, wordRegions } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { getWordRegionMapData } from '@/lib/db/region-helpers';
 import {
   Card,
   CardContent,
@@ -15,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MapPin, BookOpen, MessageSquare } from 'lucide-react';
+import { RegionalMapDisplay } from '@/components/regional-map-display';
 
 interface WordPageProps {
   params: Promise<{ id: string }>;
@@ -23,22 +25,35 @@ interface WordPageProps {
 export default async function WordPage({ params }: WordPageProps) {
   const { id } = await params;
 
-  // Fetch word with region information
-  const result = await db
-    .select({
-      word: words,
-      region: regions,
-    })
+  // Fetch word
+  const wordResult = await db
+    .select()
     .from(words)
-    .leftJoin(regions, eq(words.regionId, regions.id))
     .where(eq(words.id, id))
     .limit(1);
 
-  if (!result.length) {
+  if (!wordResult.length) {
     notFound();
   }
 
-  const { word, region } = result[0];
+  const word = wordResult[0];
+
+  // Fetch all regions where this word is used
+  const wordRegionsList = await db
+    .select({
+      region: regions,
+      usageStrength: wordRegions.usageStrength,
+    })
+    .from(wordRegions)
+    .leftJoin(regions, eq(wordRegions.regionId, regions.id))
+    .where(eq(wordRegions.wordId, id));
+
+  const usedInRegions = wordRegionsList
+    .map((wr) => wr.region)
+    .filter(Boolean) as (typeof regions.$inferSelect)[];
+
+  // Get map data with hierarchical expansion
+  const mapData = await getWordRegionMapData(id);
 
   return (
     <div className='min-h-screen bg-sand-50'>
@@ -65,19 +80,20 @@ export default async function WordPage({ params }: WordPageProps) {
                   /{word.pronunciation}/
                 </p>
               )}
-              <div className='flex gap-2'>
+              <div className='flex gap-2 flex-wrap'>
                 <Badge className='bg-terracotta-100 text-terracotta-700 hover:bg-terracotta-200'>
                   {word.dialectType} Dialect
                 </Badge>
-                {region && (
+                {usedInRegions.map((region) => (
                   <Badge
+                    key={region.id}
                     variant='outline'
                     className='border-sand-300 text-sand-600'
                   >
                     <MapPin className='mr-1 h-3 w-3' />
                     {region.name}
                   </Badge>
-                )}
+                ))}
               </div>
             </div>
           </div>
@@ -148,30 +164,48 @@ export default async function WordPage({ params }: WordPageProps) {
         )}
 
         {/* Regional Information */}
-        {region && (
+        {usedInRegions.length > 0 && (
           <Card className='border-sand-200'>
             <CardHeader>
               <CardTitle className='flex items-center gap-2 text-terracotta-700'>
                 <MapPin className='h-5 w-5' />
-                Regional Context
+                Regional Distribution
               </CardTitle>
+              <CardDescription>
+                This word is commonly used in {usedInRegions.length} region
+                {usedInRegions.length > 1 ? 's' : ''}
+              </CardDescription>
             </CardHeader>
-            <CardContent className='space-y-4'>
+            <CardContent className='space-y-6'>
+              {/* List of regions */}
               <div>
-                <h3 className='font-semibold text-sand-700 mb-1'>Region</h3>
-                <p className='text-sand-600'>{region.name}</p>
-                {region.code && (
-                  <p className='text-sm text-sand-400'>Code: {region.code}</p>
-                )}
-              </div>
-              {region.description && (
-                <div>
-                  <h3 className='font-semibold text-sand-700 mb-1'>
-                    About this region
-                  </h3>
-                  <p className='text-sand-600'>{region.description}</p>
+                <h3 className='font-semibold text-sand-700 mb-3'>
+                  Used in these regions:
+                </h3>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                  {usedInRegions.map((region) => (
+                    <div
+                      key={region.id}
+                      className='p-3 bg-sand-50 rounded-lg border border-sand-200'
+                    >
+                      <p className='font-medium text-sand-800'>{region.name}</p>
+                      {region.code && (
+                        <p className='text-sm text-sand-400'>
+                          Code: {region.code}
+                        </p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              )}
+              </div>
+
+              {/* Regional Map */}
+              <div>
+                <h3 className='font-semibold text-sand-700 mb-3'>
+                  Map visualization
+                </h3>
+                <RegionalMapDisplay mapData={mapData} />
+              </div>
             </CardContent>
           </Card>
         )}

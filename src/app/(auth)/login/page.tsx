@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,10 +22,23 @@ import { loginSchema } from '@/lib/validations/auth';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Redirect if already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const session = await authClient.getSession();
+      if (session?.data?.session) {
+        const callbackUrl = searchParams.get('callbackUrl') || '/';
+        router.push(callbackUrl);
+      }
+    };
+    checkAuth();
+  }, [router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,8 +62,9 @@ export default function LoginPage() {
         return;
       }
 
-      // Redirect to home on success
-      router.push('/');
+      // Redirect to callback URL or home on success
+      const callbackUrl = searchParams.get('callbackUrl') || '/';
+      router.push(callbackUrl);
       router.refresh();
     } catch (err: any) {
       if (err.errors) {

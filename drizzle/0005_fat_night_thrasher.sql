@@ -1,0 +1,1 @@
+ALTER TABLE "word_regions" ADD COLUMN "usage_strength" integer DEFAULT 50 NOT NULL;

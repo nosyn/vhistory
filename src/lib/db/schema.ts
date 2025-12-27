@@ -92,6 +92,35 @@ export const words = pgTable(
   }
 );
 
+// Word-Regions junction table - many-to-many relationship
+// Supports linking at any region level (broad, subregion, or province)
+export const wordRegions = pgTable(
+  'word_regions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    wordId: uuid('word_id')
+      .references(() => words.id, { onDelete: 'cascade' })
+      .notNull(),
+    regionId: uuid('region_id')
+      .references(() => regions.id, { onDelete: 'cascade' })
+      .notNull(),
+    usageStrength: integer('usage_strength').default(50).notNull(), // 0-100: strength of usage in this region
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => {
+    return [
+      {
+        wordIdx: index('word_regions_word_idx').on(table.wordId),
+        regionIdx: index('word_regions_region_idx').on(table.regionId),
+        uniqueWordRegion: index('word_regions_unique_idx').on(
+          table.wordId,
+          table.regionId
+        ),
+      },
+    ];
+  }
+);
+
 // Relations
 export const countriesRelations = relations(countries, ({ many }) => ({
   regions: many(regions),
@@ -111,11 +140,24 @@ export const regionsRelations = relations(regions, ({ one, many }) => ({
     relationName: 'regionHierarchy',
   }),
   words: many(words),
+  wordRegions: many(wordRegions),
 }));
 
-export const wordsRelations = relations(words, ({ one }) => ({
+export const wordsRelations = relations(words, ({ one, many }) => ({
   region: one(regions, {
     fields: [words.regionId],
+    references: [regions.id],
+  }),
+  wordRegions: many(wordRegions),
+}));
+
+export const wordRegionsRelations = relations(wordRegions, ({ one }) => ({
+  word: one(words, {
+    fields: [wordRegions.wordId],
+    references: [words.id],
+  }),
+  region: one(regions, {
+    fields: [wordRegions.regionId],
     references: [regions.id],
   }),
 }));

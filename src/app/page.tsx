@@ -43,6 +43,25 @@ export default function Home() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [mapData, setMapData] = useState<Array<{ id: string; value: number }>>(
+    []
+  );
+
+  // Fetch regional word statistics
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.stats.regions.$get();
+        if (res.ok) {
+          const data = await res.json();
+          setMapData(data.mapData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats', error);
+      }
+    };
+    fetchStats();
+  }, []);
 
   // Debounced search effect
   useEffect(() => {
@@ -221,10 +240,10 @@ export default function Home() {
           <div className='w-full'>
             <VietnamRegionalMap
               height={400}
-              data={[]}
+              data={mapData}
               domain={[0, 100]}
-              colors='BuPu'
-              showLegend={false}
+              colors='oranges'
+              showLegend={true}
             />
           </div>
           <div className='grid grid-cols-3 gap-4'>

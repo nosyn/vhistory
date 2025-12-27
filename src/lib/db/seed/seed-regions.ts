@@ -1,20 +1,30 @@
 import { db } from '../index';
 import { countries, regions } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export async function seedVietnamRegions() {
   console.log('🌱 Seeding Vietnam regions...');
 
-  // 1. Create Vietnam country
-  const [vietnam] = await db
-    .insert(countries)
-    .values({
-      name: 'Vietnam',
-      code: 'VN',
-    })
-    .onConflictDoNothing()
-    .returning();
+  // 1. Get or create Vietnam country
+  let vietnam = await db
+    .select()
+    .from(countries)
+    .where(eq(countries.code, 'VN'))
+    .limit(1)
+    .then((res) => res[0]);
 
-  console.log('✅ Created country:', vietnam.name);
+  if (!vietnam) {
+    [vietnam] = await db
+      .insert(countries)
+      .values({
+        name: 'Vietnam',
+        code: 'VN',
+      })
+      .returning();
+    console.log('✅ Created country:', vietnam.name);
+  } else {
+    console.log('✅ Country already exists:', vietnam.name);
+  }
 
   // 2. Create broad regions (Miền)
   const [mienBac] = await db
