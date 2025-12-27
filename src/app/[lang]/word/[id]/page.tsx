@@ -17,13 +17,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MapPin, BookOpen, MessageSquare } from 'lucide-react';
 import { RegionalMapDisplay } from '@/components/regional-map-display';
+import { getDictionary } from '@/i18n/dictionaries';
+import { Locale } from '@/i18n/config';
 
 interface WordPageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string; lang: Locale }>;
 }
 
 export default async function WordPage({ params }: WordPageProps) {
-  const { id } = await params;
+  const { id, lang } = await params;
+  const dict = getDictionary(lang);
 
   // Fetch word
   const wordResult = await db
@@ -60,13 +63,13 @@ export default async function WordPage({ params }: WordPageProps) {
       {/* Header */}
       <section className='bg-white border-b border-sand-200'>
         <div className='max-w-4xl mx-auto px-6 py-8'>
-          <Link href='/'>
+          <Link href={`/${lang}`}>
             <Button
               variant='ghost'
               className='mb-4 text-sand-600 hover:text-terracotta-600 hover:bg-sand-100'
             >
               <ArrowLeft className='mr-2 h-4 w-4' />
-              Back to Search
+              {dict.word.backToSearch}
             </Button>
           </Link>
 
@@ -82,7 +85,12 @@ export default async function WordPage({ params }: WordPageProps) {
               )}
               <div className='flex gap-2 flex-wrap'>
                 <Badge className='bg-terracotta-100 text-terracotta-700 hover:bg-terracotta-200'>
-                  {word.dialectType} Dialect
+                  {word.dialectType === 'North'
+                    ? dict.dialects.north
+                    : word.dialectType === 'Central'
+                    ? dict.dialects.central
+                    : dict.dialects.south}{' '}
+                  {dict.word.dialect}
                 </Badge>
                 {usedInRegions.map((region) => (
                   <Badge
@@ -107,7 +115,7 @@ export default async function WordPage({ params }: WordPageProps) {
           <CardHeader>
             <CardTitle className='flex items-center gap-2 text-terracotta-700'>
               <BookOpen className='h-5 w-5' />
-              Definition
+              {dict.word.definition}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -123,7 +131,7 @@ export default async function WordPage({ params }: WordPageProps) {
             <CardHeader>
               <CardTitle className='flex items-center gap-2 text-terracotta-700'>
                 <MessageSquare className='h-5 w-5' />
-                Usage Example
+                {dict.word.usageExample}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -140,8 +148,10 @@ export default async function WordPage({ params }: WordPageProps) {
         {word.etymology && (
           <Card className='border-sand-200'>
             <CardHeader>
-              <CardTitle className='text-terracotta-700'>Etymology</CardTitle>
-              <CardDescription>Origin and history of the word</CardDescription>
+              <CardTitle className='text-terracotta-700'>
+                {dict.word.etymology}
+              </CardTitle>
+              <CardDescription>{dict.word.etymologyDesc}</CardDescription>
             </CardHeader>
             <CardContent>
               <p className='text-sand-700 leading-relaxed'>{word.etymology}</p>
@@ -154,7 +164,7 @@ export default async function WordPage({ params }: WordPageProps) {
           <Card className='border-sand-200'>
             <CardHeader>
               <CardTitle className='text-terracotta-700'>
-                Cultural Notes
+                {dict.word.culturalNotes}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -169,18 +179,22 @@ export default async function WordPage({ params }: WordPageProps) {
             <CardHeader>
               <CardTitle className='flex items-center gap-2 text-terracotta-700'>
                 <MapPin className='h-5 w-5' />
-                Regional Distribution
+                {dict.word.regionalDistribution}
               </CardTitle>
               <CardDescription>
-                This word is commonly used in {usedInRegions.length} region
-                {usedInRegions.length > 1 ? 's' : ''}
+                {dict.word.usedInRegions
+                  .replace('{count}', usedInRegions.length.toString())
+                  .replace(
+                    '{plural}',
+                    usedInRegions.length > 1 ? (lang === 'vi' ? '' : 's') : ''
+                  )}
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-6'>
               {/* List of regions */}
               <div>
                 <h3 className='font-semibold text-sand-700 mb-3'>
-                  Used in these regions:
+                  {dict.word.usedInTheseRegions}
                 </h3>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
                   {usedInRegions.map((region) => (
@@ -191,7 +205,7 @@ export default async function WordPage({ params }: WordPageProps) {
                       <p className='font-medium text-sand-800'>{region.name}</p>
                       {region.code && (
                         <p className='text-sm text-sand-400'>
-                          Code: {region.code}
+                          {dict.word.code}: {region.code}
                         </p>
                       )}
                     </div>
@@ -202,7 +216,7 @@ export default async function WordPage({ params }: WordPageProps) {
               {/* Regional Map */}
               <div>
                 <h3 className='font-semibold text-sand-700 mb-3'>
-                  Map visualization
+                  {dict.word.mapVisualization}
                 </h3>
                 <RegionalMapDisplay mapData={mapData} />
               </div>
@@ -215,22 +229,28 @@ export default async function WordPage({ params }: WordPageProps) {
         {/* Metadata */}
         <div className='flex justify-between items-center text-sm text-sand-400'>
           <p>
-            Added on{' '}
-            {new Date(word.createdAt).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
+            {dict.word.addedOn}{' '}
+            {new Date(word.createdAt).toLocaleDateString(
+              lang === 'vi' ? 'vi-VN' : 'en-US',
+              {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              }
+            )}
           </p>
           {word.updatedAt &&
             word.updatedAt.getTime() !== word.createdAt.getTime() && (
               <p>
-                Last updated{' '}
-                {new Date(word.updatedAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+                {dict.word.lastUpdated}{' '}
+                {new Date(word.updatedAt).toLocaleDateString(
+                  lang === 'vi' ? 'vi-VN' : 'en-US',
+                  {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  }
+                )}
               </p>
             )}
         </div>
@@ -241,7 +261,7 @@ export default async function WordPage({ params }: WordPageProps) {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: WordPageProps) {
-  const { id } = await params;
+  const { id, lang } = await params;
 
   const result = await db.select().from(words).where(eq(words.id, id)).limit(1);
 
