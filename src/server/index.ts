@@ -10,20 +10,19 @@ const app = new Hono().basePath('/api');
 // Apply security middleware
 applySecurityMiddleware(app);
 
-// Mount routes
-app.route('/', wordsRoutes);
-app.route('/blog', blogRoutes);
-app.route('/word-of-the-day', wordOfTheDayRoutes);
-
-// Health check endpoint
-app.get('/health', (c) => {
-  return c.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
+// Mount routes and create route instance for type export
+const routes = app
+  .route('/', wordsRoutes)
+  .route('/blog', blogRoutes)
+  .route('/word-of-the-day', wordOfTheDayRoutes)
+  .get('/health', (c) => {
+    return c.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+    });
   });
-});
 
-// Export the app type for RPC client
-export type AppType = typeof app;
+// Export the route type for RPC client (not the app type)
+export type AppType = typeof routes;
 
 export default app;

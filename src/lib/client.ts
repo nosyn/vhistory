@@ -6,6 +6,8 @@ const baseUrl =
     ? window.location.origin
     : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-export const client = hc<AppType>(baseUrl);
+export const client = hc<AppType>(baseUrl, {
+  init: { credentials: 'include' },
+});
 
 export const api = client.api;

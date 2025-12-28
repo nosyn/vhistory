@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { MessageSquare, Send } from 'lucide-react';
 import { api } from '@/lib/client';
+import { getInitials, formatDate } from '@/lib/helpers/format';
 
 interface Comment {
   id: string;
@@ -41,7 +42,13 @@ export function BlogComments({ slug, session }: BlogCommentsProps) {
       });
       const data = await response.json();
       if ('comments' in data) {
-        setComments(data.comments);
+        // Convert date strings to Date objects
+        const commentsWithDates = data.comments.map((comment) => ({
+          ...comment,
+          createdAt: new Date(comment.createdAt),
+          updatedAt: new Date(comment.updatedAt),
+        }));
+        setComments(commentsWithDates);
       }
     } catch (error) {
       console.error('Failed to load comments:', error);
@@ -74,36 +81,6 @@ export function BlogComments({ slug, session }: BlogCommentsProps) {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const formatDate = (date: Date) => {
-    const commentDate = new Date(date);
-    const now = new Date();
-    const diffMs = now.getTime() - commentDate.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-
-    return commentDate.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year:
-        commentDate.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-    });
   };
 
   return (

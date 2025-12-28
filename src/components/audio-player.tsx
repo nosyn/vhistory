@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Volume2, VolumeX, Play, Pause } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Pause, Play, Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface AudioPlayerProps {
   word: string;
@@ -135,7 +134,8 @@ export function AudioPlayer({ word, accents }: AudioPlayerProps) {
                   handlePlay(index);
                 }
               }}
-              className={cn('w-28',
+              className={cn(
+                'w-28',
                 currentAccent === index && isPlaying
                   ? 'bg-terracotta-600 hover:bg-terracotta-700 text-white'
                   : 'border-sand-300 text-sand-700 hover:bg-sand-50'
