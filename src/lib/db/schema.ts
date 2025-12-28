@@ -121,6 +121,72 @@ export const wordRegions = pgTable(
   }
 );
 
+// Word of the Day table
+export const wordOfTheDay = pgTable('word_of_the_day', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  wordId: uuid('word_id')
+    .references(() => words.id, { onDelete: 'cascade' })
+    .notNull(),
+  date: timestamp('date').notNull().unique(), // One word per day
+  viewCount: integer('view_count').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Blog posts table
+export const blogPosts = pgTable(
+  'blog_posts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    title: text('title').notNull(),
+    slug: text('slug').notNull().unique(),
+    content: text('content').notNull(), // Tiptap JSON content
+    excerpt: text('excerpt'),
+    authorId: text('author_id').notNull(), // References user.id from auth-schema
+    wordId: uuid('word_id').references(() => words.id, {
+      onDelete: 'set null',
+    }), // Optional word association
+    published: timestamp('published_at'),
+    viewCount: integer('view_count').default(0).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => {
+    return [
+      {
+        slugIdx: index('blog_posts_slug_idx').on(table.slug),
+        authorIdx: index('blog_posts_author_idx').on(table.authorId),
+        wordIdx: index('blog_posts_word_idx').on(table.wordId),
+        publishedIdx: index('blog_posts_published_idx').on(table.published),
+      },
+    ];
+  }
+);
+
+// Blog comments table
+export const blogComments = pgTable(
+  'blog_comments',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    blogPostId: uuid('blog_post_id')
+      .references(() => blogPosts.id, { onDelete: 'cascade' })
+      .notNull(),
+    authorId: text('author_id').notNull(), // User ID from auth system
+    authorName: text('author_name').notNull(), // Display name
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => {
+    return [
+      {
+        blogPostIdx: index('blog_comments_blog_post_idx').on(table.blogPostId),
+        authorIdx: index('blog_comments_author_idx').on(table.authorId),
+        createdAtIdx: index('blog_comments_created_at_idx').on(table.createdAt),
+      },
+    ];
+  }
+);
+
 // Relations
 export const countriesRelations = relations(countries, ({ many }) => ({
   regions: many(regions),
@@ -149,6 +215,8 @@ export const wordsRelations = relations(words, ({ one, many }) => ({
     references: [regions.id],
   }),
   wordRegions: many(wordRegions),
+  blogPosts: many(blogPosts),
+  wordOfTheDayEntries: many(wordOfTheDay),
 }));
 
 export const wordRegionsRelations = relations(wordRegions, ({ one }) => ({
@@ -159,5 +227,27 @@ export const wordRegionsRelations = relations(wordRegions, ({ one }) => ({
   region: one(regions, {
     fields: [wordRegions.regionId],
     references: [regions.id],
+  }),
+}));
+
+export const wordOfTheDayRelations = relations(wordOfTheDay, ({ one }) => ({
+  word: one(words, {
+    fields: [wordOfTheDay.wordId],
+    references: [words.id],
+  }),
+}));
+
+export const blogPostsRelations = relations(blogPosts, ({ one, many }) => ({
+  word: one(words, {
+    fields: [blogPosts.wordId],
+    references: [words.id],
+  }),
+  comments: many(blogComments),
+}));
+
+export const blogCommentsRelations = relations(blogComments, ({ one }) => ({
+  blogPost: one(blogPosts, {
+    fields: [blogComments.blogPostId],
+    references: [blogPosts.id],
   }),
 }));

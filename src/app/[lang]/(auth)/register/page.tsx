@@ -8,7 +8,7 @@ export default async function RegisterPage({
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await params;
-  const dict = getDictionary(lang);
+  const dict = await getDictionary(lang);
 
   return <RegisterClient dict={dict} lang={lang} />;
 }

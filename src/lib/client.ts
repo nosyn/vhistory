@@ -1,10 +1,11 @@
-import { hc } from 'hono/client'
-import type { AppType } from '@/server'
+import { hc } from 'hono/client';
+import type { AppType } from '@/server';
 
-const baseUrl = typeof window !== 'undefined' 
-  ? window.location.origin 
-  : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const baseUrl =
+  typeof window !== 'undefined'
+    ? window.location.origin
+    : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-const client = hc<AppType>(baseUrl)
+export const client = hc<AppType>(baseUrl);
 
-export const api = client.api
+export const api = client.api;

@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MapPin, BookOpen, MessageSquare } from 'lucide-react';
 import { RegionalMapDisplay } from '@/components/regional-map-display';
+import { AudioPlayer } from '@/components/audio-player';
 import { getDictionary } from '@/i18n/dictionaries';
 import { Locale } from '@/i18n/config';
 
@@ -26,7 +27,7 @@ interface WordPageProps {
 
 export default async function WordPage({ params }: WordPageProps) {
   const { id, lang } = await params;
-  const dict = getDictionary(lang);
+  const dict = await getDictionary(lang);
 
   // Fetch word
   const wordResult = await db
@@ -110,6 +111,16 @@ export default async function WordPage({ params }: WordPageProps) {
 
       {/* Content */}
       <div className='max-w-4xl mx-auto px-6 py-12 space-y-8'>
+        {/* Audio Player */}
+        <AudioPlayer
+          word={word.content}
+          accents={[
+            { label: 'Northern', dialect: 'North' },
+            { label: 'Central', dialect: 'Central' },
+            { label: 'Southern', dialect: 'South' },
+          ]}
+        />
+
         {/* Definition */}
         <Card className='border-sand-200'>
           <CardHeader>

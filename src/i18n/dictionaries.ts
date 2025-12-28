@@ -1,15 +1,19 @@
 import 'server-only';
-import { Locale } from './config';
-import viDict from './dictionaries/vi.json';
-import enDict from './dictionaries/en.json';
+import type { Locale } from './config';
 
-const dictionaries = {
-  vi: viDict,
-  en: enDict,
+type DictionaryLoader = () => Promise<any>;
+
+const dictionaries: Record<Locale, DictionaryLoader> = {
+  vi: () => import('./dictionaries/vi.json').then((module) => module.default),
+  en: () => import('./dictionaries/en.json').then((module) => module.default),
 };
 
-export const getDictionary = (locale: Locale) => {
-  return dictionaries[locale];
+export const getDictionary = async (locale: Locale) => {
+  const loader = dictionaries[locale];
+  if (!loader) {
+    throw new Error(`Dictionary not found for locale: ${locale}`);
+  }
+  return await loader();
 };
 
-export type Dictionary = ReturnType<typeof getDictionary>;
+export type Dictionary = Awaited<ReturnType<typeof getDictionary>>;

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { api } from '@/lib/client';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,10 +14,11 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Search } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { Locale } from '@/i18n/config';
 import { Dictionary } from '@/i18n/dictionaries';
+import { SearchCommand } from '@/components/search-command';
 
 // Dynamic import for Nivo map component (client-side only)
 const VietnamRegionalMap = dynamic(
@@ -45,13 +45,29 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ dict, lang }: HomeClientProps) {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
   const [mapData, setMapData] = useState<Array<{ id: string; value: number }>>(
     []
   );
+  const [wordOfTheDay, setWordOfTheDay] = useState<any>(null);
+  const [wotdLoading, setWotdLoading] = useState(true);
+
+  // Fetch Word of the Day
+  useEffect(() => {
+    const fetchWordOfTheDay = async () => {
+      try {
+        const res = await fetch('/api/word-of-the-day');
+        if (res.ok) {
+          const data = await res.json();
+          setWordOfTheDay(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch Word of the Day', error);
+      } finally {
+        setWotdLoading(false);
+      }
+    };
+    fetchWordOfTheDay();
+  }, []);
 
   // Fetch regional word statistics
   useEffect(() => {
@@ -69,40 +85,6 @@ export default function HomeClient({ dict, lang }: HomeClientProps) {
     fetchStats();
   }, []);
 
-  // Debounced search effect
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (query.trim()) {
-        handleSearch();
-      } else {
-        setResults([]);
-        setHasSearched(false);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  const handleSearch = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!query.trim()) return;
-
-    setLoading(true);
-    setHasSearched(false);
-    try {
-      const res = await api.search.$get({ query: { q: query } });
-      if (res.ok) {
-        const data = await res.json();
-        setResults(data.results);
-        setHasSearched(true);
-      }
-    } catch (error) {
-      console.error('Search failed', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className='min-h-screen'>
       {/* Hero Section */}
@@ -118,73 +100,9 @@ export default function HomeClient({ dict, lang }: HomeClientProps) {
             {dict.home.subtitle}
           </p>
 
-          <form onSubmit={handleSearch} className='relative max-w-xl mx-auto'>
-            <div className='relative'>
-              <Search className='absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-sand-400' />
-              <Input
-                type='text'
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={dict.home.searchPlaceholder}
-                className='pl-12 pr-28 h-14 rounded-full border-2 border-sand-200 focus:border-terracotta-400 focus:ring-4 focus:ring-terracotta-100 text-lg font-serif placeholder:text-sand-300 shadow-sm'
-              />
-              <Button
-                type='submit'
-                disabled={loading}
-                className='absolute right-2 top-1/2 -translate-y-1/2 bg-terracotta-600 hover:bg-terracotta-700 text-white px-6 rounded-full h-10'
-              >
-                {loading ? '...' : dict.common.search}
-              </Button>
-            </div>
-          </form>
-
-          {/* Quick Results Demo */}
-          {results.length > 0 ? (
-            <div className='mt-8 max-w-xl mx-auto space-y-2'>
-              {results.map((word: any) => (
-                <Link key={word.id} href={`/${lang}/word/${word.id}`}>
-                  <Card className='text-left hover:shadow-md transition-shadow border-sand-200 cursor-pointer'>
-                    <CardHeader className='pb-3'>
-                      <div className='flex justify-between items-start'>
-                        <CardTitle className='text-xl font-serif text-terracotta-700'>
-                          {word.content}
-                        </CardTitle>
-                        <Badge
-                          variant='secondary'
-                          className='bg-sand-100 text-terracotta-700 hover:bg-sand-200'
-                        >
-                          {word.dialectType}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className='space-y-2'>
-                      <CardDescription className='text-sand-600'>
-                        {word.definition}
-                      </CardDescription>
-                      {word.usageExample && (
-                        <Alert className='bg-sand-50 border-sand-200'>
-                          <AlertDescription className='text-sand-600 italic text-sm'>
-                            "{word.usageExample}"
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          ) : hasSearched && !loading ? (
-            <Card className='mt-8 max-w-xl mx-auto border-dashed border-sand-300 bg-sand-50'>
-              <CardContent className='py-8 text-center'>
-                <p className='text-sand-500 font-serif italic'>
-                  {dict.home.noResults.replace('{query}', query)}
-                </p>
-                <p className='text-sm text-sand-400 mt-1'>
-                  {dict.home.trySearching}
-                </p>
-              </CardContent>
-            </Card>
-          ) : null}
+          <div className='max-w-xl mx-auto'>
+            <SearchCommand lang={lang} />
+          </div>
         </div>
       </section>
 
@@ -200,41 +118,64 @@ export default function HomeClient({ dict, lang }: HomeClientProps) {
             <Separator className='flex-1 bg-terracotta-200' />
           </div>
 
-          <Card className='shadow-md border-sand-200 group hover:shadow-lg transition-shadow relative overflow-hidden'>
-            <div className='absolute top-0 right-0 p-4 opacity-10 font-serif text-9xl text-terracotta-200 select-none group-hover:scale-110 transition-transform duration-700'>
-              "
-            </div>
-            <CardHeader className='relative z-10'>
-              <Badge className='w-fit mb-2 bg-terracotta-100 text-terracotta-700 hover:bg-terracotta-200'>
-                {dict.dialects.central}
-              </Badge>
-              <CardTitle className='text-4xl font-serif text-gray-900'>
-                Chí mô
-              </CardTitle>
-              <CardDescription className='text-lg italic text-sand-500'>
-                /chiː mo/ • exclamation
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='relative z-10 space-y-4'>
-              <p className='text-gray-700 leading-relaxed text-lg'>
-                {lang === 'vi'
-                  ? 'Dùng để diễn đạt "đâu có" hoặc "không chút nào" theo cách phủ nhận hoặc nhấn mạnh. Tương tự như "đâu có" trong tiếng Việt chuẩn nhưng với phong cách địa phương đậm đà hơn.'
-                  : 'Used to express "nowhere" or "nothing at all" in a dismissive or emphasizing way. Similar to "đâu có" in standard Vietnamese but with stronger regional flair.'}
-              </p>
-              <Alert className='bg-sand-50 border-l-4 border-terracotta-400'>
-                <AlertDescription className='space-y-1'>
-                  <p className='text-sand-600 font-medium'>
-                    "Mi đi mô rứa? Tau nỏ đi chí mô cả!"
+          {wotdLoading ? (
+            <Card className='shadow-md border-sand-200'>
+              <CardContent className='py-8'>
+                <div className='flex items-center justify-center'>
+                  <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-terracotta-500' />
+                </div>
+              </CardContent>
+            </Card>
+          ) : wordOfTheDay?.word ? (
+            <Link href={`/${lang}/word/${wordOfTheDay.word.id}`}>
+              <Card className='shadow-md border-sand-200 group hover:shadow-lg transition-shadow relative overflow-hidden cursor-pointer'>
+                <div className='absolute top-0 right-0 p-4 opacity-10 font-serif text-9xl text-terracotta-200 select-none group-hover:scale-110 transition-transform duration-700'>
+                  "
+                </div>
+                <CardHeader className='relative z-10'>
+                  <div className='flex items-start justify-between'>
+                    <Badge className='w-fit mb-2 bg-terracotta-100 text-terracotta-700 hover:bg-terracotta-200'>
+                      {wordOfTheDay.word.dialectType}
+                    </Badge>
+                    <ExternalLink className='h-5 w-5 text-terracotta-400 group-hover:text-terracotta-600 transition-colors' />
+                  </div>
+                  <CardTitle className='text-4xl font-serif text-gray-900'>
+                    {wordOfTheDay.word.content}
+                  </CardTitle>
+                  {wordOfTheDay.word.pronunciation && (
+                    <CardDescription className='text-lg italic text-sand-500'>
+                      /{wordOfTheDay.word.pronunciation}/
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent className='relative z-10 space-y-4'>
+                  <p className='text-gray-700 leading-relaxed text-lg'>
+                    {wordOfTheDay.word.definition}
                   </p>
-                  <p className='text-sand-400 text-sm'>
-                    {lang === 'vi'
-                      ? '(Bạn đi đâu vậy? Tôi không đi đâu cả!)'
-                      : "(Where are you going? I'm not going anywhere!)"}
-                  </p>
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
+                  {wordOfTheDay.word.usageExample && (
+                    <Alert className='bg-sand-50 border-l-4 border-terracotta-400'>
+                      <AlertDescription className='space-y-1'>
+                        <p className='text-sand-600 font-medium italic'>
+                          "{wordOfTheDay.word.usageExample}"
+                        </p>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {wordOfTheDay.stats && (
+                    <p className='text-xs text-sand-400'>
+                      {wordOfTheDay.stats.viewCount} views today
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </Link>
+          ) : (
+            <Card className='shadow-md border-sand-200'>
+              <CardContent className='py-8 text-center'>
+                <p className='text-sand-500'>No word of the day available</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Map Section */}
@@ -246,47 +187,25 @@ export default function HomeClient({ dict, lang }: HomeClientProps) {
             </h2>
             <Separator className='flex-1 bg-sand-200' />
           </div>
-          <div className='w-full'>
-            <VietnamRegionalMap
-              height={400}
-              data={mapData}
-              domain={[0, 100]}
-              colors='oranges'
-              showLegend={true}
-            />
-          </div>
-          <div className='grid grid-cols-3 gap-4'>
-            <Card className='text-center border-sand-200 hover:shadow-md transition-shadow'>
-              <CardContent className='pt-6'>
-                <div className='text-3xl font-serif font-bold text-terracotta-600 mb-1'>
-                  1,240
-                </div>
-                <div className='text-xs text-sand-400 font-medium uppercase tracking-widest'>
-                  {dict.dialects.north}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className='text-center border-sand-200 hover:shadow-md transition-shadow'>
-              <CardContent className='pt-6'>
-                <div className='text-3xl font-serif font-bold text-terracotta-600 mb-1'>
-                  3,892
-                </div>
-                <div className='text-xs text-sand-400 font-medium uppercase tracking-widest'>
-                  {dict.dialects.central}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className='text-center border-sand-200 hover:shadow-md transition-shadow'>
-              <CardContent className='pt-6'>
-                <div className='text-3xl font-serif font-bold text-terracotta-600 mb-1'>
-                  2,105
-                </div>
-                <div className='text-xs text-sand-400 font-medium uppercase tracking-widest'>
-                  {dict.dialects.south}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <Card className='border-sand-200'>
+            <CardHeader>
+              <CardTitle className='text-lg text-sand-700'>
+                Word Usage by Region
+              </CardTitle>
+              <CardDescription>
+                Explore how words are distributed across Vietnam's provinces
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <VietnamRegionalMap
+                height={400}
+                data={mapData}
+                domain={[0, 100]}
+                colors='oranges'
+                showLegend={true}
+              />
+            </CardContent>
+          </Card>
         </div>
       </section>
     </div>

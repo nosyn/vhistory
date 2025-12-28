@@ -11,7 +11,7 @@ export default async function AuthLayout({
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await params;
-  const dict = getDictionary(lang);
+  const dict = await getDictionary(lang);
 
   return (
     <div className='min-h-[calc(100vh-9rem)] flex items-center justify-center bg-sand-50 px-4 py-12'>
