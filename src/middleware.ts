@@ -32,12 +32,20 @@ function getLocale(request: NextRequest): string {
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Skip middleware for static files, API routes, and special Next.js routes
+  // Skip middleware for static files, API routes, service workers, and special Next.js routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/static') ||
-    pathname.includes('.') // Files with extensions
+    pathname === '/serviceWorker.js' ||
+    pathname === '/sw.js' ||
+    pathname === '/manifest.json' ||
+    pathname === '/robots.txt' ||
+    pathname === '/sitemap.xml' ||
+    pathname === '/favicon.ico' ||
+    /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp|mp3|wav|ogg)$/i.test(
+      pathname
+    )
   ) {
     return NextResponse.next();
   }
