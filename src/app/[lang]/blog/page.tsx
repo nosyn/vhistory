@@ -68,14 +68,12 @@ export default async function BlogListPage({
                 Back to Home
               </Button>
             </Link>
-            {session?.user && (
-              <Link href={`/${lang}/blog/create`}>
-                <Button className='bg-terracotta-600 hover:bg-terracotta-700 text-white'>
-                  <PenSquare className='mr-2 h-4 w-4' />
-                  Write Blog Post
-                </Button>
-              </Link>
-            )}
+            <Link href={`/${lang}/blog/create`}>
+              <Button className='bg-terracotta-600 hover:bg-terracotta-700 text-white'>
+                <PenSquare className='mr-2 h-4 w-4' />
+                Write Blog Post
+              </Button>
+            </Link>
           </div>
           <h1 className='text-5xl font-serif font-bold text-terracotta-800 mb-4'>
             Blog

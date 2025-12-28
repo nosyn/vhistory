@@ -25,9 +25,10 @@ import { Dictionary } from '@/i18n/dictionaries';
 interface LoginClientProps {
   dict: Dictionary;
   lang: Locale;
+  returnUrl?: string;
 }
 
-export default function LoginClient({ dict, lang }: LoginClientProps) {
+export default function LoginClient({ dict, lang, returnUrl }: LoginClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -40,12 +41,12 @@ export default function LoginClient({ dict, lang }: LoginClientProps) {
     const checkAuth = async () => {
       const session = await authClient.getSession();
       if (session?.data?.session) {
-        const callbackUrl = searchParams.get('callbackUrl') || `/${lang}`;
+        const callbackUrl = returnUrl || searchParams.get('callbackUrl') || `/${lang}`;
         router.push(callbackUrl);
       }
     };
     checkAuth();
-  }, [router, searchParams, lang]);
+  }, [router, searchParams, lang, returnUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +69,7 @@ export default function LoginClient({ dict, lang }: LoginClientProps) {
       }
 
       // Redirect to callback URL or home on success
-      const callbackUrl = searchParams.get('callbackUrl') || `/${lang}`;
+      const callbackUrl = returnUrl || searchParams.get('callbackUrl') || `/${lang}`;
       router.push(callbackUrl);
       router.refresh();
     } catch (err: any) {
@@ -89,7 +90,7 @@ export default function LoginClient({ dict, lang }: LoginClientProps) {
     try {
       await authClient.signIn.social({
         provider: 'google',
-        callbackURL: `/${lang}`,
+        callbackURL: returnUrl || `/${lang}`,
       });
     } catch (err) {
       setError(dict.auth.googleSignInError);

@@ -26,9 +26,14 @@ import { Dictionary } from '@/i18n/dictionaries';
 interface RegisterClientProps {
   dict: Dictionary;
   lang: Locale;
+  returnUrl?: string;
 }
 
-export default function RegisterClient({ dict, lang }: RegisterClientProps) {
+export default function RegisterClient({
+  dict,
+  lang,
+  returnUrl,
+}: RegisterClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [name, setName] = useState('');
@@ -44,12 +49,13 @@ export default function RegisterClient({ dict, lang }: RegisterClientProps) {
     const checkAuth = async () => {
       const session = await authClient.getSession();
       if (session?.data?.session) {
-        const callbackUrl = searchParams.get('callbackUrl') || `/${lang}`;
+        const callbackUrl =
+          returnUrl || searchParams.get('callbackUrl') || `/${lang}`;
         router.push(callbackUrl);
       }
     };
     checkAuth();
-  }, [router, searchParams, lang]);
+  }, [router, searchParams, lang, returnUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,8 +89,10 @@ export default function RegisterClient({ dict, lang }: RegisterClientProps) {
         return;
       }
 
-      // Redirect to home on success
-      router.push(`/${lang}`);
+      // Redirect to callback URL or home on success
+      const callbackUrl =
+        returnUrl || searchParams.get('callbackUrl') || `/${lang}`;
+      router.push(callbackUrl);
       router.refresh();
     } catch (err: any) {
       if (err.errors) {
@@ -104,7 +112,7 @@ export default function RegisterClient({ dict, lang }: RegisterClientProps) {
     try {
       await authClient.signIn.social({
         provider: 'google',
-        callbackURL: `/${lang}`,
+        callbackURL: returnUrl || `/${lang}`,
       });
     } catch (err) {
       setError(dict.auth.googleSignUpError);

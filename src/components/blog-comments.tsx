@@ -106,7 +106,7 @@ export function BlogComments({ slug, session }: BlogCommentsProps) {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder='Share your thoughts...'
-                  className='min-h-[100px] border-sand-300 focus:border-terracotta-500 focus:ring-terracotta-500'
+                  className='min-h-25 border-sand-300 focus:border-terracotta-500 focus:ring-terracotta-500'
                   maxLength={1000}
                 />
                 <div className='flex justify-between items-center mt-2'>
