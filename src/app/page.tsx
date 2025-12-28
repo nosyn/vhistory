@@ -1,9 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { api } from '@/lib/client';
-import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,12 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { api } from '@/lib/client';
 import { Search } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import MapDemo from '@/components/maps/map-demo';
+import { useEffect, useState } from 'react';
 
 // Dynamic import for Nivo map component (client-side only)
 const VietnamRegionalMap = dynamic(
@@ -134,8 +133,11 @@ export default function Home() {
           {/* Quick Results Demo */}
           {results.length > 0 ? (
             <div className='mt-8 max-w-xl mx-auto space-y-2'>
-              {results.map((word: any) => (
-                <Link key={word.id} href={`/word/${word.id}`}>
+              {results.map((word) => (
+                <Link
+                  key={word.id}
+                  href={`/word/${encodeURIComponent(word.content)}`}
+                >
                   <Card className='text-left hover:shadow-md transition-shadow border-sand-200 cursor-pointer'>
                     <CardHeader className='pb-3'>
                       <div className='flex justify-between items-start'>

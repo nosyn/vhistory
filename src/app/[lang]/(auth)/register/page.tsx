@@ -3,6 +3,7 @@ import { Locale } from '@/i18n/config';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import RegisterClient from './register-client';
 
 export default async function RegisterPage({
@@ -26,5 +27,15 @@ export default async function RegisterPage({
     redirect(returnUrl || `/${lang}`);
   }
 
-  return <RegisterClient dict={dict} lang={lang} returnUrl={returnUrl} />;
+  return (
+    <Suspense
+      fallback={
+        <div className='flex items-center justify-center min-h-screen'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-terracotta-500' />
+        </div>
+      }
+    >
+      <RegisterClient dict={dict} lang={lang} returnUrl={returnUrl} />
+    </Suspense>
+  );
 }

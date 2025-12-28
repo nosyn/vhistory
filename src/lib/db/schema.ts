@@ -6,6 +6,7 @@ import {
   pgEnum,
   index,
   integer,
+  AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { relations } from 'drizzle-orm';
@@ -42,9 +43,12 @@ export const regions = pgTable(
     name: text('name').notNull(), // E.g., "Miền Bắc", "Đồng bằng sông Hồng", "Hà Nội"
     code: text('code').notNull(), // E.g., "VN-01" for provinces, custom for regions
     level: regionLevelEnum('level').notNull(),
-    parentRegionId: uuid('parent_region_id').references((): any => regions.id, {
-      onDelete: 'set null',
-    }),
+    parentRegionId: uuid('parent_region_id').references(
+      (): AnyPgColumn => regions.id,
+      {
+        onDelete: 'set null',
+      }
+    ),
     description: text('description'),
     sortOrder: integer('sort_order').default(0),
     createdAt: timestamp('created_at').defaultNow().notNull(),

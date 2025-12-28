@@ -49,6 +49,15 @@
         "central": "Central",
         "south": "Southern"
     },
+    "notFound": {
+        "title": "Page Not Found",
+        "description": "The page you're looking for doesn't exist or has been moved.",
+        "suggestion": "Let's get you back on track.",
+        "homeButton": "Go Home",
+        "blogButton": "Blog",
+        "searchButton": "Search Words",
+        "searchQuestion": "Looking for a specific word?"
+    },
     "auth": {
         "welcomeBack": "Welcome back",
         "signInDescription": "Sign in to your account to contribute words and preserve heritage",

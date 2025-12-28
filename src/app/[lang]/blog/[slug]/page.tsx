@@ -94,7 +94,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Link href={`/${lang}/word/${associatedWord.id}`}>
+                <Link
+                  href={`/${lang}/word/${encodeURIComponent(
+                    associatedWord.content
+                  )}`}
+                >
                   <div className='flex items-center gap-2 hover:underline'>
                     <span className='text-2xl font-serif font-bold text-terracotta-700'>
                       {associatedWord.content}

@@ -127,7 +127,11 @@ export default function HomeClient({ dict, lang }: HomeClientProps) {
               </CardContent>
             </Card>
           ) : wordOfTheDay?.word ? (
-            <Link href={`/${lang}/word/${wordOfTheDay.word.id}`}>
+            <Link
+              href={`/${lang}/word/${encodeURIComponent(
+                wordOfTheDay.word.content
+              )}`}
+            >
               <Card className='shadow-md border-sand-200 group hover:shadow-lg transition-shadow relative overflow-hidden cursor-pointer'>
                 <div className='absolute top-0 right-0 p-4 opacity-10 font-serif text-9xl text-terracotta-200 select-none group-hover:scale-110 transition-transform duration-700'>
                   "

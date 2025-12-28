@@ -49,6 +49,15 @@
         "central": "Miền Trung",
         "south": "Miền Nam"
     },
+    "notFound": {
+        "title": "Trang không tồn tại",
+        "description": "Rất tiếc, trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.",
+        "suggestion": "Hãy thử tìm kiếm từ khác hoặc quay về trang chủ.",
+        "homeButton": "Trang chủ",
+        "blogButton": "Blog",
+        "searchButton": "Tìm kiếm",
+        "searchQuestion": "Bạn đang tìm kiếm từ nào?"
+    },
     "auth": {
         "welcomeBack": "Chào mừng trở lại",
         "signInDescription": "Đăng nhập để đóng góp từ và gìn giữ di sản",

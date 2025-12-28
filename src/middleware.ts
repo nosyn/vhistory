@@ -48,7 +48,10 @@ export function middleware(request: NextRequest) {
   );
 
   if (pathnameHasLocale) {
-    return NextResponse.next();
+    // Add pathname to headers for not-found page
+    const response = NextResponse.next();
+    response.headers.set('x-pathname', pathname);
+    return response;
   }
 
   // Redirect to locale-prefixed path
@@ -58,7 +61,9 @@ export function middleware(request: NextRequest) {
   // Preserve search params
   newUrl.search = request.nextUrl.search;
 
-  return NextResponse.redirect(newUrl);
+  const response = NextResponse.redirect(newUrl);
+  response.headers.set('x-pathname', newUrl.pathname);
+  return response;
 }
 
 export const config = {

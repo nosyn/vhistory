@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { MessageSquare, Send } from 'lucide-react';
 import { api } from '@/lib/client';
 import { getInitials, formatDate } from '@/lib/helpers/format';
+import { toast } from 'sonner';
 
 interface Comment {
   id: string;
@@ -52,6 +53,9 @@ export function BlogComments({ slug, session }: BlogCommentsProps) {
       }
     } catch (error) {
       console.error('Failed to load comments:', error);
+      toast.error('Failed to Load Comments', {
+        description: 'Could not load comments. Please try again later.',
+      });
     } finally {
       setLoading(false);
     }
@@ -75,9 +79,19 @@ export function BlogComments({ slug, session }: BlogCommentsProps) {
       if (response.ok) {
         setContent('');
         await loadComments();
+        toast.success('Comment Posted', {
+          description: 'Your comment has been added successfully.',
+        });
+      } else {
+        toast.error('Failed to Post Comment', {
+          description: 'Could not post your comment. Please try again.',
+        });
       }
     } catch (error) {
       console.error('Failed to submit comment:', error);
+      toast.error('Failed to Post Comment', {
+        description: 'An error occurred while posting your comment.',
+      });
     } finally {
       setSubmitting(false);
     }

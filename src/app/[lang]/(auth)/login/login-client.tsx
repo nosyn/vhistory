@@ -193,7 +193,7 @@ export default function LoginClient({ dict, lang, returnUrl }: LoginClientProps)
           <div className='text-sm text-center text-sand-500'>
             {dict.auth.noAccount}{' '}
             <Link
-              href={`/${lang}/register`}
+              href={`/${lang}/register${returnUrl ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ''}`}
               className='text-terracotta-600 hover:text-terracotta-700 font-medium transition-colors'
             >
               {dict.auth.signUp}

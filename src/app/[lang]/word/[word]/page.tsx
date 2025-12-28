@@ -22,18 +22,20 @@ import { getDictionary } from '@/i18n/dictionaries';
 import { Locale } from '@/i18n/config';
 
 interface WordPageProps {
-  params: Promise<{ id: string; lang: Locale }>;
+  params: Promise<{ word: string; lang: Locale }>;
 }
 
 export default async function WordPage({ params }: WordPageProps) {
-  const { id, lang } = await params;
+  const { word: encodedWord, lang } = await params;
+  // Decode the URL-encoded word
+  const wordContent = decodeURIComponent(encodedWord);
   const dict = await getDictionary(lang);
 
-  // Fetch word
+  // Fetch word by content
   const wordResult = await db
     .select()
     .from(words)
-    .where(eq(words.id, id))
+    .where(eq(words.content, wordContent))
     .limit(1);
 
   if (!wordResult.length) {
@@ -50,14 +52,14 @@ export default async function WordPage({ params }: WordPageProps) {
     })
     .from(wordRegions)
     .leftJoin(regions, eq(wordRegions.regionId, regions.id))
-    .where(eq(wordRegions.wordId, id));
+    .where(eq(wordRegions.wordId, word.id));
 
   const usedInRegions = wordRegionsList
     .map((wr) => wr.region)
     .filter(Boolean) as (typeof regions.$inferSelect)[];
 
   // Get map data with hierarchical expansion
-  const mapData = await getWordRegionMapData(id);
+  const mapData = await getWordRegionMapData(word.id);
 
   return (
     <div className='min-h-screen bg-sand-50'>
@@ -272,9 +274,14 @@ export default async function WordPage({ params }: WordPageProps) {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: WordPageProps) {
-  const { id, lang } = await params;
+  const { word: encodedWord, lang } = await params;
+  const wordContent = decodeURIComponent(encodedWord);
 
-  const result = await db.select().from(words).where(eq(words.id, id)).limit(1);
+  const result = await db
+    .select()
+    .from(words)
+    .where(eq(words.content, wordContent))
+    .limit(1);
 
   if (!result.length) {
     return {

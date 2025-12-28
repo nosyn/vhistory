@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Hono, Context, Next } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
@@ -53,7 +53,7 @@ export const rateLimiterMiddleware = rateLimiter({
  */
 export const bodySizeLimit = (maxSize: number = 1024 * 1024) => {
   // 1MB default
-  return async (c: any, next: any) => {
+  return async (c: Context, next: Next) => {
     const contentLength = c.req.header('content-length');
     if (contentLength && parseInt(contentLength) > maxSize) {
       throw new HTTPException(413, {
@@ -68,7 +68,7 @@ export const bodySizeLimit = (maxSize: number = 1024 * 1024) => {
  * Error handler middleware
  * Provides consistent error responses
  */
-export const errorHandler = (err: Error, c: any) => {
+export const errorHandler = (err: Error, c: Context) => {
   if (err instanceof HTTPException) {
     return c.json(
       {

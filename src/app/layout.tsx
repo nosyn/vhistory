@@ -1,5 +1,7 @@
+import './globals.css';
 import type { Metadata } from 'next';
 import { Merriweather, Inter } from 'next/font/google';
+import { cn } from '@/lib/utils';
 
 const merriweather = Merriweather({
   variable: '--font-serif',
@@ -22,5 +24,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  return (
+    <html lang='en'>
+      <body
+        className={cn(
+          merriweather.variable,
+          inter.variable,
+          'antialiased min-h-screen'
+        )}
+      >
+        {children}
+      </body>
+    </html>
+  );
 }
