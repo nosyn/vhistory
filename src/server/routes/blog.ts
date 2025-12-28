@@ -3,18 +3,19 @@ import { db } from '@/lib/db';
 import { blogPosts, blogComments } from '@/lib/db/schema';
 import { sql, eq, desc } from 'drizzle-orm';
 import { z } from 'zod';
-import { zValidator } from '@hono/zod-validator';
+import { validator } from '../lib/validator';
+import { createError } from '../lib/errors';
 
 const blogRoutes = new Hono()
   .post(
     '/create',
-    zValidator(
+    validator(
       'json',
       z.object({
-        title: z.string().min(1),
+        title: z.string().min(1, 'Title is required'),
         excerpt: z.string().optional(),
-        content: z.string().min(1),
-        wordId: z.uuid().optional().nullable(),
+        content: z.string().min(1, 'Content is required'),
+        wordId: z.uuid('Invalid word ID format').optional().nullable(),
         publish: z.boolean().default(false),
       })
     ),
@@ -30,24 +31,20 @@ const blogRoutes = new Hono()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
 
-      try {
-        const [post] = await db
-          .insert(blogPosts)
-          .values({
-            title,
-            slug: `${slug}-${Date.now()}`,
-            content,
-            excerpt: excerpt || null,
-            authorId,
-            wordId: wordId || null,
-            published: publish ? new Date() : null,
-          })
-          .returning();
+      const [post] = await db
+        .insert(blogPosts)
+        .values({
+          title,
+          slug: `${slug}-${Date.now()}`,
+          content,
+          excerpt: excerpt || null,
+          authorId,
+          wordId: wordId || null,
+          published: publish ? new Date() : null,
+        })
+        .returning();
 
-        return c.json(post);
-      } catch (error) {
-        return c.json({ message: 'Failed to create blog post' }, 500);
-      }
+      return c.json({ success: true, data: post });
     }
   )
   .get('/:slug', async (c) => {
@@ -61,7 +58,7 @@ const blogRoutes = new Hono()
       .then((res) => res[0]);
 
     if (!post) {
-      return c.json({ message: 'Blog post not found' }, 404);
+      throw createError('NOT_FOUND', 'Blog post not found');
     }
 
     // Increment view count
@@ -70,7 +67,7 @@ const blogRoutes = new Hono()
       .set({ viewCount: sql`${blogPosts.viewCount} + 1` })
       .where(eq(blogPosts.id, post.id));
 
-    return c.json(post);
+    return c.json({ success: true, data: post });
   })
   .get('/', async (c) => {
     const posts = await db
@@ -80,7 +77,7 @@ const blogRoutes = new Hono()
       .orderBy(desc(blogPosts.published))
       .limit(20);
 
-    return c.json({ posts });
+    return c.json({ success: true, data: { posts } });
   })
   .get('/:slug/comments', async (c) => {
     const slug = c.req.param('slug');
@@ -94,7 +91,7 @@ const blogRoutes = new Hono()
       .then((res) => res[0]);
 
     if (!post) {
-      return c.json({ message: 'Blog post not found' }, 404);
+      throw createError('NOT_FOUND', 'Blog post not found');
     }
 
     // Get comments for this post
@@ -104,16 +101,19 @@ const blogRoutes = new Hono()
       .where(eq(blogComments.blogPostId, post.id))
       .orderBy(desc(blogComments.createdAt));
 
-    return c.json({ comments });
+    return c.json({ success: true, data: { comments } });
   })
   .post(
     '/:slug/comments',
-    zValidator(
+    validator(
       'json',
       z.object({
-        content: z.string().min(1).max(1000),
-        authorId: z.string().min(1),
-        authorName: z.string().min(1),
+        content: z
+          .string()
+          .min(1, 'Comment is required')
+          .max(1000, 'Comment is too long'),
+        authorId: z.string().min(1, 'Author ID is required'),
+        authorName: z.string().min(1, 'Author name is required'),
       })
     ),
     async (c) => {
@@ -129,24 +129,20 @@ const blogRoutes = new Hono()
         .then((res) => res[0]);
 
       if (!post) {
-        return c.json({ message: 'Blog post not found' }, 404);
+        throw createError('NOT_FOUND', 'Blog post not found');
       }
 
-      try {
-        const [comment] = await db
-          .insert(blogComments)
-          .values({
-            blogPostId: post.id,
-            content,
-            authorId,
-            authorName,
-          })
-          .returning();
+      const [comment] = await db
+        .insert(blogComments)
+        .values({
+          blogPostId: post.id,
+          content,
+          authorId,
+          authorName,
+        })
+        .returning();
 
-        return c.json(comment);
-      } catch (error) {
-        return c.json({ message: 'Failed to create comment' }, 500);
-      }
+      return c.json({ success: true, data: comment });
     }
   );
 

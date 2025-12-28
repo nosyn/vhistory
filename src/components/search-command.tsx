@@ -35,13 +35,19 @@ export function SearchCommand({ lang }: SearchCommandProps) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['search', debouncedQuery],
     queryFn: async () => {
-      if (!debouncedQuery.trim()) return { results: [] };
+      if (!debouncedQuery.trim()) return [];
 
       const res = await api.search.$get({ query: { q: debouncedQuery } });
+
       if (!res.ok) {
         throw new Error('Search failed');
       }
-      return await res.json();
+
+      const {
+        data: { results },
+      } = await res.json();
+
+      return results;
     },
     enabled: debouncedQuery.trim().length > 0,
   });
@@ -55,7 +61,7 @@ export function SearchCommand({ lang }: SearchCommandProps) {
     }
   }, [error]);
 
-  const results = data?.results || [];
+  const results = data || [];
 
   // Keyboard shortcut to open command
   useEffect(() => {

@@ -52,7 +52,7 @@ export default function Home() {
       try {
         const res = await api.stats.regions.$get();
         if (res.ok) {
-          const data = await res.json();
+          const { data } = await res.json();
           setMapData(data.mapData);
         }
       } catch (error) {
@@ -85,7 +85,7 @@ export default function Home() {
     try {
       const res = await api.search.$get({ query: { q: query } });
       if (res.ok) {
-        const data = await res.json();
+        const { data } = await res.json();
         setResults(data.results);
         setHasSearched(true);
       }

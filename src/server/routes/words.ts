@@ -3,16 +3,16 @@ import { db } from '@/lib/db';
 import { words } from '@/lib/db/schema';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { zValidator } from '@hono/zod-validator';
+import { validator } from '@/server/lib/validator';
 import { getAllWordsRegionMapData } from '@/lib/db/region-helpers';
 
-const wordsRoutes = new Hono()
+const wordsRoutes = new Hono<{ Bindings: any }>()
   .get(
     '/search',
-    zValidator(
+    validator(
       'query',
       z.object({
-        q: z.string().min(1),
+        q: z.string().min(1, 'Search query is required'),
       })
     ),
     async (c) => {
@@ -25,7 +25,8 @@ const wordsRoutes = new Hono()
         .limit(10);
 
       return c.json({
-        results,
+        success: true,
+        data: { results },
       });
     }
   )
@@ -42,10 +43,13 @@ const wordsRoutes = new Hono()
     const totalRegionsWithWords = mapData.length;
 
     return c.json({
-      mapData,
-      stats: {
-        totalWords,
-        totalRegionsWithWords,
+      success: true,
+      data: {
+        mapData,
+        stats: {
+          totalWords,
+          totalRegionsWithWords,
+        },
       },
     });
   });

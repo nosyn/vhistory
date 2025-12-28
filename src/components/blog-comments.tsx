@@ -41,7 +41,8 @@ export function BlogComments({ slug, session }: BlogCommentsProps) {
       const response = await api.blog[':slug'].comments.$get({
         param: { slug },
       });
-      const data = await response.json();
+      const { data } = await response.json();
+
       if ('comments' in data) {
         // Convert date strings to Date objects
         const commentsWithDates = data.comments.map((comment) => ({

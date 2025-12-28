@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { api } from '@/lib/client';
-import { Button } from '@/components/ui/button';
+import { SearchCommand } from '@/components/search-command';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
@@ -11,14 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ExternalLink } from 'lucide-react';
-import Link from 'next/link';
 import { Locale } from '@/i18n/config';
 import { Dictionary } from '@/i18n/dictionaries';
-import { SearchCommand } from '@/components/search-command';
+import { api } from '@/lib/client';
+import { ExternalLink } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 // Dynamic import for Nivo map component (client-side only)
 const VietnamRegionalMap = dynamic(
@@ -75,7 +74,7 @@ export default function HomeClient({ dict, lang }: HomeClientProps) {
       try {
         const res = await api.stats.regions.$get();
         if (res.ok) {
-          const data = await res.json();
+          const { data } = await res.json();
           setMapData(data.mapData);
         }
       } catch (error) {
