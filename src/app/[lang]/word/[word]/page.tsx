@@ -1,9 +1,8 @@
-import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { db } from '@/lib/db';
-import { words, regions, wordRegions } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
-import { getWordRegionMapData } from '@/lib/db/region-helpers';
+import { AudioPlayer } from '@/components/audio-player';
+import { RegionalMapDisplay } from '@/components/maps/regional-map-display';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -11,15 +10,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin, BookOpen, MessageSquare } from 'lucide-react';
-import { RegionalMapDisplay } from '@/components/regional-map-display';
-import { AudioPlayer } from '@/components/audio-player';
-import { getDictionary } from '@/i18n/dictionaries';
 import { Locale } from '@/i18n/config';
+import { getDictionary } from '@/i18n/dictionaries';
+import { db } from '@/lib/db';
+import { getWordRegionMapData } from '@/lib/db/region-helpers';
+import { regions, wordRegions, words } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+import { ArrowLeft, BookOpen, MapPin, MessageSquare } from 'lucide-react';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 interface WordPageProps {
   params: Promise<{ word: string; lang: Locale }>;
@@ -274,7 +274,7 @@ export default async function WordPage({ params }: WordPageProps) {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: WordPageProps) {
-  const { word: encodedWord, lang } = await params;
+  const { word: encodedWord } = await params;
   const wordContent = decodeURIComponent(encodedWord);
 
   const result = await db

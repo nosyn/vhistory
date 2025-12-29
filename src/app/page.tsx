@@ -12,30 +12,11 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { RegionalMapDisplay } from '@/components/maps/regional-map-display';
 import { api } from '@/lib/client';
 import { Search } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-
-// Dynamic import for Nivo map component (client-side only)
-const VietnamRegionalMap = dynamic(
-  () => import('@/components/maps/vietnam-regional-map'),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        className='flex items-center justify-center bg-sand-50 rounded-lg border border-sand-200'
-        style={{ height: 400, width: '100%' }}
-      >
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-terracotta-500 mx-auto mb-4' />
-          <p className='text-sand-600'>Loading map...</p>
-        </div>
-      </div>
-    ),
-  }
-);
 
 export default function Home() {
   const [query, setQuery] = useState('');
@@ -240,13 +221,7 @@ export default function Home() {
             <Separator className='flex-1 bg-sand-200' />
           </div>
           <div className='w-full'>
-            <VietnamRegionalMap
-              height={400}
-              data={mapData}
-              domain={[0, 100]}
-              colors='oranges'
-              showLegend={true}
-            />
+            <RegionalMapDisplay mapData={mapData} />
           </div>
           <div className='grid grid-cols-3 gap-4'>
             <Card className='text-center border-sand-200 hover:shadow-md transition-shadow'>

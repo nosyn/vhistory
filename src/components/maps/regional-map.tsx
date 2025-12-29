@@ -17,25 +17,28 @@ interface Province {
   };
 }
 
-interface VietnamGeoJSON {
+interface GeoJSON {
   type: 'FeatureCollection';
   features: Province[];
 }
 
-interface VietnamRegionalMapProps {
+interface RegionalMapProps {
   /**
-   * Optional callback when a province is clicked
+   * Path to GeoJSON file
    */
-  onProvinceClick?: (province: Province) => void;
+  geoJsonPath: string;
   /**
-   * Optional array of province data with values for choropleth coloring
+   * Optional callback when a feature is clicked
+   */
+  onFeatureClick?: (feature: Province) => void;
+  /**
+   * Optional array of region data with values for choropleth coloring
    * Format: [{ id: 'VN-01', value: 50 }, ...]
-   * Value represents usage strength (0-100)
    */
   data?: Array<{ id: string; value: number }>;
   /**
    * Domain for color scale [min, max]
-   * Default: [0, 100] for usage strength
+   * Default: [0, 100]
    */
   domain?: [number, number];
   /**
@@ -51,30 +54,59 @@ interface VietnamRegionalMapProps {
    * Custom height (will be responsive width)
    */
   height?: number;
+  /**
+   * Projection configuration
+   */
+  projection?: {
+    type?: 'mercator' | 'orthographic' | 'equalEarth' | 'naturalEarth1';
+    scale?: number;
+    translation?: [number, number];
+    rotation?: [number, number, number];
+  };
+  /**
+   * Label to display for each feature (defaults to 'properties.name')
+   */
+  featureLabelPath?: string;
+  /**
+   * Custom tooltip content
+   */
+  tooltipContent?: (
+    feature: any,
+    dataPoint?: { id: string; value: number }
+  ) => React.ReactNode;
 }
 
-export default function VietnamRegionalMap({
-  onProvinceClick,
+export default function RegionalMap({
+  geoJsonPath,
+  onFeatureClick,
   data = [],
   domain = [0, 100],
   colors = 'BuPu',
   showLegend = true,
   height = 600,
-}: VietnamRegionalMapProps) {
-  const [geoData, setGeoData] = useState<VietnamGeoJSON | null>(null);
+  projection = {
+    type: 'mercator',
+    scale: 1400,
+    translation: [0.5, 0.5],
+    rotation: [-106, -16, 0],
+  },
+  featureLabelPath = 'properties.name',
+  tooltipContent,
+}: RegionalMapProps) {
+  const [geoData, setGeoData] = useState<GeoJSON | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Load GeoJSON data
   useEffect(() => {
-    fetch('/vn.json')
+    fetch(geoJsonPath)
       .then((response) => {
         if (!response.ok) {
-          throw new Error('Failed to load Vietnam map data');
+          throw new Error('Failed to load map data');
         }
         return response.json();
       })
-      .then((data: VietnamGeoJSON) => {
+      .then((data: GeoJSON) => {
         setGeoData(data);
         setLoading(false);
       })
@@ -82,7 +114,7 @@ export default function VietnamRegionalMap({
         setError(err.message);
         setLoading(false);
       });
-  }, []);
+  }, [geoJsonPath]);
 
   if (loading) {
     return (
@@ -139,19 +171,19 @@ export default function VietnamRegionalMap({
         colors={terracottaColors}
         domain={domain}
         unknownColor='#faf8f6'
-        label='properties.name'
+        label={featureLabelPath}
         valueFormat='.2s'
-        projectionType='mercator'
-        projectionScale={1400}
-        projectionTranslation={[0.5, 0.5]}
-        projectionRotation={[-106, -16, 0]}
+        projectionType={projection.type || 'mercator'}
+        projectionScale={projection.scale || 1400}
+        projectionTranslation={projection.translation || [0.5, 0.5]}
+        projectionRotation={projection.rotation || [0, 0, 0]}
         enableGraticule={false}
         graticuleLineColor='#ded7d0'
         borderWidth={1.5}
         borderColor='#e5dfd8'
         onClick={(feature) => {
-          if (onProvinceClick && feature.data) {
-            onProvinceClick(feature.data as Province);
+          if (onFeatureClick && feature.data) {
+            onFeatureClick(feature.data as Province);
           }
         }}
         legends={
@@ -199,7 +231,13 @@ export default function VietnamRegionalMap({
           },
         }}
         tooltip={({ feature }) => {
-          const featureId = (feature as any).properties?.id; // Use properties.id (e.g., "VN22")
+          if (tooltipContent) {
+            const featureId = (feature as any).properties?.id;
+            const dataPoint = data.find((d) => d.id === featureId);
+            return tooltipContent(feature, dataPoint);
+          }
+
+          const featureId = (feature as any).properties?.id;
           const featureName = (feature as any).properties?.name;
           const dataPoint = data.find((d) => d.id === featureId);
           return (
@@ -209,14 +247,14 @@ export default function VietnamRegionalMap({
               </div>
               {dataPoint ? (
                 <div className='text-sm text-sand-600'>
-                  Usage Strength:{' '}
+                  Value:{' '}
                   <span className='font-medium text-terracotta-600'>
-                    {dataPoint.value}%
+                    {dataPoint.value}
                   </span>
                 </div>
               ) : (
                 <div className='text-xs text-sand-400 italic'>
-                  No words recorded yet
+                  No data available
                 </div>
               )}
             </div>

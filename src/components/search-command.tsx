@@ -139,7 +139,7 @@ export function SearchCommand({ lang }: SearchCommandProps) {
                   <CommandItem
                     key={word.id}
                     value={`${word.id}-${word.content}`}
-                    keywords={[word.definition]}
+                    keywords={[word.definition, word.content]}
                     onSelect={() => handleSelect(word.content)}
                     className='cursor-pointer rounded-lg p-4 mb-2 hover:bg-sand-50 border border-transparent hover:border-sand-200 transition-all'
                   >

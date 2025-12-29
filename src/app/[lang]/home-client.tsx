@@ -1,5 +1,6 @@
 'use client';
 
+import { RegionalMapDisplay } from '@/components/maps/regional-map-display';
 import { SearchCommand } from '@/components/search-command';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -15,28 +16,8 @@ import { Locale } from '@/i18n/config';
 import { Dictionary } from '@/i18n/dictionaries';
 import { api } from '@/lib/client';
 import { ExternalLink } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-
-// Dynamic import for Nivo map component (client-side only)
-const VietnamRegionalMap = dynamic(
-  () => import('@/components/maps/vietnam-regional-map'),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        className='flex items-center justify-center bg-sand-50 rounded-lg border border-sand-200'
-        style={{ height: 400, width: '100%' }}
-      >
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-terracotta-500 mx-auto mb-4' />
-          <p className='text-sand-600'>Loading map...</p>
-        </div>
-      </div>
-    ),
-  }
-);
 
 interface HomeClientProps {
   dict: Dictionary;
@@ -48,7 +29,7 @@ export default function HomeClient({ dict, lang }: HomeClientProps) {
     []
   );
   const [wordOfTheDay, setWordOfTheDay] = useState<any>(null);
-  const [wotdLoading, setWotdLoading] = useState(true);
+  const [wordLoading, setWordLoading] = useState(true);
 
   // Fetch Word of the Day
   useEffect(() => {
@@ -62,7 +43,7 @@ export default function HomeClient({ dict, lang }: HomeClientProps) {
       } catch (error) {
         console.error('Failed to fetch Word of the Day', error);
       } finally {
-        setWotdLoading(false);
+        setWordLoading(false);
       }
     };
     fetchWordOfTheDay();
@@ -117,7 +98,7 @@ export default function HomeClient({ dict, lang }: HomeClientProps) {
             <Separator className='flex-1 bg-terracotta-200' />
           </div>
 
-          {wotdLoading ? (
+          {wordLoading ? (
             <Card className='shadow-md border-sand-200'>
               <CardContent className='py-8'>
                 <div className='flex items-center justify-center'>
@@ -200,13 +181,7 @@ export default function HomeClient({ dict, lang }: HomeClientProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <VietnamRegionalMap
-                height={400}
-                data={mapData}
-                domain={[0, 100]}
-                colors='oranges'
-                showLegend={true}
-              />
+              <RegionalMapDisplay mapData={mapData} />
             </CardContent>
           </Card>
         </div>
